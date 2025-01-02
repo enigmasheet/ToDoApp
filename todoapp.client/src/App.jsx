@@ -1,51 +1,75 @@
-import { useEffect, useState } from 'react';
-import './App.css';
+import React, { useState, useEffect } from 'react';
+import TodoService from './TodoService';
 
 function App() {
-    const [forecasts, setForecasts] = useState();
+    const [todos, setTodos] = useState([]);
+    const [title, setTitle] = useState('');
+    const [isCompleted, setIsCompleted] = useState(false);
 
     useEffect(() => {
-        populateWeatherData();
+        loadTodos();
     }, []);
 
-    const contents = forecasts === undefined
-        ? <p><em>Loading... Please refresh once the ASP.NET backend has started. See <a href="https://aka.ms/jspsintegrationreact">https://aka.ms/jspsintegrationreact</a> for more details.</em></p>
-        : <table className="table table-striped" aria-labelledby="tableLabel">
-            <thead>
-                <tr>
-                    <th>Date</th>
-                    <th>Temp. (C)</th>
-                    <th>Temp. (F)</th>
-                    <th>Summary</th>
-                </tr>
-            </thead>
-            <tbody>
-                {forecasts.map(forecast =>
-                    <tr key={forecast.date}>
-                        <td>{forecast.date}</td>
-                        <td>{forecast.temperatureC}</td>
-                        <td>{forecast.temperatureF}</td>
-                        <td>{forecast.summary}</td>
-                    </tr>
-                )}
-            </tbody>
-        </table>;
+    const loadTodos = async () => {
+        try {
+            const response = await TodoService.getTodos();
+            setTodos(response.data);
+        } catch (error) {
+            console.error('Error fetching todos:', error);
+        }
+    };
+
+    const handleAddTodo = async () => {
+        if (!title.trim()) return alert('Please enter a title');
+        try {
+            await TodoService.addTodo({ title, isCompleted });
+            setTitle('');
+            setIsCompleted(false);
+            loadTodos();
+        } catch (error) {
+            console.error('Error adding todo:', error);
+        }
+    };
+
+    const handleDeleteTodo = async (id) => {
+        try {
+            await TodoService.deleteTodo(id);
+            loadTodos();
+        } catch (error) {
+            console.error('Error deleting todo:', error);
+        }
+    };
 
     return (
-        <div>
-            <h1 id="tableLabel">Weather forecast</h1>
-            <p>This component demonstrates fetching data from the server.</p>
-            {contents}
+        <div className="App">
+            <h1>Todo App</h1>
+            <div>
+                <input
+                    type="text"
+                    placeholder="Enter todo title"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                />
+                <label>
+                    <input
+                        type="checkbox"
+                        checked={isCompleted}
+                        onChange={(e) => setIsCompleted(e.target.checked)}
+                    />
+                    Completed
+                </label>
+                <button onClick={handleAddTodo}>Add Todo</button>
+            </div>
+            <ul>
+                {todos.map((todo) => (
+                    <li key={todo.id}>
+                        {todo.title} - {todo.isCompleted ? 'Completed' : 'Not Completed'}
+                        <button onClick={() => handleDeleteTodo(todo.id)}>Delete</button>
+                    </li>
+                ))}
+            </ul>
         </div>
     );
-    
-    async function populateWeatherData() {
-        const response = await fetch('weatherforecast');
-        if (response.ok) {
-            const data = await response.json();
-            setForecasts(data);
-        }
-    }
 }
 
 export default App;
