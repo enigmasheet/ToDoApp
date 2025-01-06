@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import TodoService from './TodoService';
 
 function App() {
-    const [todos, setTodos] = useState([]);
+    const [todo, setTodos] = useState([]);
     const [title, setTitle] = useState('');
     const [isCompleted, setIsCompleted] = useState(false);
 
@@ -13,30 +13,34 @@ function App() {
     const loadTodos = async () => {
         try {
             const response = await TodoService.getTodos();
-            setTodos(response.data);
+            console.log(response.data)
+            setTodos(response.data || []); // Fallback to an empty array
         } catch (error) {
-            console.error('Error fetching todos:', error);
+            console.error('Error fetching todos:', error.message || error);
         }
     };
 
     const handleAddTodo = async () => {
-        if (!title.trim()) return alert('Please enter a title');
+        if (!title.trim()) {
+            alert('Please enter a title');
+            return;
+        }
         try {
             await TodoService.addTodo({ title, isCompleted });
-            setTitle('');
-            setIsCompleted(false);
-            loadTodos();
+            setTitle(''); // Reset title input
+            setIsCompleted(false); // Reset checkbox
+            loadTodos(); // Reload todos
         } catch (error) {
-            console.error('Error adding todo:', error);
+            console.error('Error adding todo:', error.message || error);
         }
     };
-
+    console.log(todo);
     const handleDeleteTodo = async (id) => {
         try {
             await TodoService.deleteTodo(id);
-            loadTodos();
+            loadTodos(); // Reload todos
         } catch (error) {
-            console.error('Error deleting todo:', error);
+            console.error('Error deleting todo:', error.message || error);
         }
     };
 
@@ -61,12 +65,16 @@ function App() {
                 <button onClick={handleAddTodo}>Add Todo</button>
             </div>
             <ul>
-                {todos.map((todo) => (
-                    <li key={todo.id}>
-                        {todo.title} - {todo.isCompleted ? 'Completed' : 'Not Completed'}
-                        <button onClick={() => handleDeleteTodo(todo.id)}>Delete</button>
-                    </li>
-                ))}
+                {todo.length && todo.length>0 ? (
+                    todo?.map((todo) => (
+                        <li key={todo.id}>
+                            {todo.title} - {todo.isCompleted ? 'Completed' : 'Not Completed'}
+                            <button onClick={() => handleDeleteTodo(todo.id)}>Delete</button>
+                        </li>
+                    ))
+                ) : (
+                    <p>No todos available. Add one to get started!</p>
+                )}
             </ul>
         </div>
     );

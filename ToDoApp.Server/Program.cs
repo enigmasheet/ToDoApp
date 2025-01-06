@@ -1,3 +1,5 @@
+using ToDoApp.Server.Repository;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -13,6 +15,8 @@ builder.Services.AddCors(options=>
         .AllowAnyHeader()
         .AllowAnyMethod());
 });
+//builder.Services.AddScoped<ITodoRepository, TodoRepository>(provider =>
+//    new TodoRepository(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 var app = builder.Build();
 
